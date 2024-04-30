@@ -1,0 +1,37 @@
+  0 ISP 3
+
+  1 LA 0 0
+  2 GETI
+  3 SI
+
+  4 LA 0 1
+  5 LV 0 0
+  6 LC 10
+  7 MOD
+  8 SI
+  
+  9 LV 0 1
+ 10 LC 5
+ 11 LT
+ 12 BZ 6
+
+ 13 LA 0 0
+ 14 LV 0 0
+ 15 LV 0 1
+ 16 SUB
+ 17 SI
+ 18 B 7
+
+ 19 LA 0 0
+ 20 LV 0 0
+ 21 LV 0 1
+ 22 SUB
+ 23 LC 10
+ 24 ADD
+ 25 SI
+
+ 26 LV 0 0
+ 27 PUTI
+ 28 LC 10
+ 29 PUTC
+ 30 EXIT

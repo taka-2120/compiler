@@ -1,0 +1,32 @@
+  0 ISP 3
+
+  1 LA 0 0
+  2 LC 3
+  3 SI
+
+  4 LA 0 0
+  5 LV 0 0
+  6 LV 0 0
+  7 MUL
+  8 SI
+
+  9 LA 0 1
+ 10 LC 4
+ 11 SI
+
+ 12 LA 0 1
+ 13 LV 0 1
+ 14 LV 0 1
+ 15 MUL
+ 16 SI
+ 
+ 17 LA 0 2
+ 18 LV 0 0
+ 19 LV 0 1
+ 20 ADD
+ 21 SI
+
+ 22 PUTI
+ 23 LC 10
+ 24 PUTC
+ 25 EXIT
