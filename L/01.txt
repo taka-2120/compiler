@@ -1,0 +1,276 @@
+科目名: コンパイラ
+課題: L
+番号: 37022465
+氏名: 高橋 由
+作成: 2024年4月23日
+
+4. 字句解析の演習
+
+----------
+
+L.1 ~ L.8: 特に問題なし
+
+----------
+L.9
+
+1. 行ったこと
+lex_slip_space の実装
+
+2. 結果
+```
+testlex.txt:4: invalid token
+```
+
+3. 感想
+スペースや改行などが出てくるまで一文字ずつトークンに追加するメソッドであることが分かった。
+
+----------
+L.10
+
+1. 行ったこと
+lex_get_kw_id の実装
+
+2. 結果
+```
+type = ID         token = "a"
+type = ID         token = "b"
+type = ID         token = "c"
+type = ID         token = "abc"
+type = ID         token = "ABC"
+type = ID         token = "main"
+type = ID         token = "x123"
+type = ID         token = "p000Ax3"
+type = KW_CHAR    token = "char"
+type = KW_ELSE    token = "else"
+type = KW_IF      token = "if"
+type = KW_INT     token = "int"
+type = KW_RETURN  token = "return"
+type = KW_WHILE   token = "while"
+testlex.txt:6: invalid character
+```
+
+3. 感想
+先頭がアルファベットであるときにトークンがキーワードか識別子かを判断するメソッドであることが分かった。
+
+----------
+L.11
+
+1. 行ったこと
+lex_get_kw_id の改良
+
+2. 結果
+```
+type = ID         token = "a"
+type = ID         token = "b"
+type = ID         token = "c"
+type = ID         token = "abc"
+type = ID         token = "ABC"
+type = ID         token = "main"
+type = ID         token = "x123"
+type = ID         token = "p000Ax3"
+type = KW_CHAR    token = "char"
+type = KW_ELSE    token = "else"
+type = KW_IF      token = "if"
+type = KW_INT     token = "int"
+type = KW_RETURN  token = "return"
+type = KW_WHILE   token = "while"
+type = ID         token = "_program"
+type = ID         token = "u_p0x_A0x_774"
+testlex.txt:7: invalid token
+```
+
+3. 感想
+L.10 の実装からアンダースコアをアルファベットとして判定するために、アルファベットかどうかを判断している関数に、アンダースコアを追加したマクロ関数を定義することで実現ができることが分かった。
+
+----------
+L.12
+
+1. 行ったこと
+lex_get_int の実装
+
+2. 結果
+type = ID         token = "a"
+type = ID         token = "b"
+type = ID         token = "c"
+type = ID         token = "abc"
+type = ID         token = "ABC"
+type = ID         token = "main"
+type = ID         token = "x123"
+type = ID         token = "p000Ax3"
+type = KW_CHAR    token = "char"
+type = KW_ELSE    token = "else"
+type = KW_IF      token = "if"
+type = KW_INT     token = "int"
+type = KW_RETURN  token = "return"
+type = KW_WHILE   token = "while"
+type = ID         token = "_program"
+type = ID         token = "u_p0x_A0x_774"
+type = INT        token = "1"  val = 1
+type = INT        token = "2"  val = 2
+type = INT        token = "12"  val = 12
+type = INT        token = "123"  val = 123
+type = INT        token = "0123456"  val = 123456
+type = INT        token = "00123456789"  val = 123456789
+testlex.txt:8: invalid token
+
+3. 感想
+数字を一つ一つ読み込み、2桁以上の数字はすでに保持されている値に10倍して足すことで、ただの文字から数字として認識させることができる事がわかった。
+
+----------
+L.13
+
+1. 行ったこと
+lex_get_char の実装
+
+2. 結果
+type = ID         token = "a"
+type = ID         token = "b"
+type = ID         token = "c"
+type = ID         token = "abc"
+type = ID         token = "ABC"
+type = ID         token = "main"
+type = ID         token = "x123"
+type = ID         token = "p000Ax3"
+type = KW_CHAR    token = "char"
+type = KW_ELSE    token = "else"
+type = KW_IF      token = "if"
+type = KW_INT     token = "int"
+type = KW_RETURN  token = "return"
+type = KW_WHILE   token = "while"
+type = ID         token = "_program"
+type = ID         token = "u_p0x_A0x_774"
+type = INT        token = "1"  val = 1
+type = INT        token = "2"  val = 2
+type = INT        token = "12"  val = 12
+type = INT        token = "123"  val = 123
+type = INT        token = "0123456"  val = 123456
+type = INT        token = "00123456789"  val = 123456789
+type = CHAR       token = "'a'"  val = 97
+type = CHAR       token = "'b'"  val = 98
+type = CHAR       token = "'0'"  val = 48
+type = CHAR       token = "'\t'"  val = 9
+type = CHAR       token = "'\n'"  val = 10
+type = CHAR       token = "'\''"  val = 39
+type = CHAR       token = "'\\'"  val = 92
+type = SEMICOLON  token = ";"
+type = COMMA      token = ","
+testlex.txt:9: invalid character
+
+3. 感想
+文字列を認識するために、シングルクオートの中の文字の他に、改行コードなど2文字を読み取る必要があることが分かった。
+
+----------
+L.14
+
+1. 行ったこと
+lex_get_others の実装
+
+2. 結果
+type = ID         token = "a"
+type = ID         token = "b"
+type = ID         token = "c"
+type = ID         token = "abc"
+type = ID         token = "ABC"
+type = ID         token = "main"
+type = ID         token = "x123"
+type = ID         token = "p000Ax3"
+type = KW_CHAR    token = "char"
+type = KW_ELSE    token = "else"
+type = KW_IF      token = "if"
+type = KW_INT     token = "int"
+type = KW_RETURN  token = "return"
+type = KW_WHILE   token = "while"
+type = ID         token = "_program"
+type = ID         token = "u_p0x_A0x_774"
+type = INT        token = "1"  val = 1
+type = INT        token = "2"  val = 2
+type = INT        token = "12"  val = 12
+type = INT        token = "123"  val = 123
+type = INT        token = "0123456"  val = 123456
+type = INT        token = "00123456789"  val = 123456789
+type = CHAR       token = "'a'"  val = 97
+type = CHAR       token = "'b'"  val = 98
+type = CHAR       token = "'0'"  val = 48
+type = CHAR       token = "'\t'"  val = 9
+type = CHAR       token = "'\n'"  val = 10
+type = CHAR       token = "'\''"  val = 39
+type = CHAR       token = "'\\'"  val = 92
+type = SEMICOLON  token = ";"
+type = COMMA      token = ","
+type = LPAR       token = "("
+type = RPAR       token = ")"
+type = LBRACE     token = "{"
+type = RBRACE     token = "}"
+type = LBRACK     token = "["
+type = RBRACK     token = "]"
+testlex.txt:10: invalid character
+
+3. 感想
+セミコロンやカッコを判定して文字の種別を割り当てる処理が必要であることが分かった。
+
+----------
+L.15
+
+1. 行ったこと
+lex_get_others の改良
+
+2. 結果
+type = ID         token = "a"
+type = ID         token = "b"
+type = ID         token = "c"
+type = ID         token = "abc"
+type = ID         token = "ABC"
+type = ID         token = "main"
+type = ID         token = "x123"
+type = ID         token = "p000Ax3"
+type = KW_CHAR    token = "char"
+type = KW_ELSE    token = "else"
+type = KW_IF      token = "if"
+type = KW_INT     token = "int"
+type = KW_RETURN  token = "return"
+type = KW_WHILE   token = "while"
+type = ID         token = "_program"
+type = ID         token = "u_p0x_A0x_774"
+type = INT        token = "1"  val = 1
+type = INT        token = "2"  val = 2
+type = INT        token = "12"  val = 12
+type = INT        token = "123"  val = 123
+type = INT        token = "0123456"  val = 123456
+type = INT        token = "00123456789"  val = 123456789
+type = CHAR       token = "'a'"  val = 97
+type = CHAR       token = "'b'"  val = 98
+type = CHAR       token = "'0'"  val = 48
+type = CHAR       token = "'\t'"  val = 9
+type = CHAR       token = "'\n'"  val = 10
+type = CHAR       token = "'\''"  val = 39
+type = CHAR       token = "'\\'"  val = 92
+type = SEMICOLON  token = ";"
+type = COMMA      token = ","
+type = LPAR       token = "("
+type = RPAR       token = ")"
+type = LBRACE     token = "{"
+type = RBRACE     token = "}"
+type = LBRACK     token = "["
+type = RBRACK     token = "]"
+type = MINUS      token = "-"
+type = PLUS       token = "+"
+type = STAR       token = "*"
+type = SLASH      token = "/"
+type = PERCENT    token = "%"
+type = AND        token = "&"
+type = EQ         token = "="
+type = EQEQ       token = "=="
+type = NE         token = "!="
+type = GT         token = ">"
+type = GE         token = ">="
+type = LT         token = "<"
+type = LE         token = "<="
+
+3. 感想
+L.14 の記号の他に、2文字がつながって一つの記号を表すものも、一つを読み込んでからその後がどの記号かどうかを判別することで実装できることが分かった。
+
+----------
+
+[課題Lの感想]
+
+字句解析の実装を通して、文字列を一文字ずつ読み込んでいくことで、トークンを判別することができることがわかった。また、数字や文字列、記号などのトークンを判別するために、文字数等によって読み込み方をかえることで実装できることがわかった。
