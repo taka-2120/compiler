@@ -1,0 +1,229 @@
+
+科目名: コンパイラ
+課題: S1
+番号: 37022465
+氏名: 高橋 由
+作成: 2024/05/07
+
+----------
+
+S1.1
+
+1. 行ったこと
+mcc.c のメインルーチンの作成
+
+2. 結果
+at preprocess
+(linenum(1) type(KW_INT) token("int"))
+at parse_program
+at postprocess
+
+3. 感想
+深く理解が出来なかったが、とりあえず始めに初期化と、始めの1記号の読み込み、変数の開放をしていることは分かった。
+
+----------
+
+S1.2
+
+1. 行ったこと
+関数 preprocess の完成
+
+2. 結果
+at preprocess
+(linenum(1) type(KW_INT) token("int"))
+at parse_program
+at postprocess
+
+3. 感想
+static 関数について、関数のスコープを限定するために使われることが多いということが分かった。
+
+----------
+
+S1.3
+
+1. 行ったこと
+関数 parse_program の完成
+
+2. 結果
+at preprocess
+(linenum(1) type(KW_INT) token("int"))
+at parse_program
+at parse_declaration_head
+at parse_variable_declaration_tail
+declare.mc:1: ';' expected (last token 'int')
+
+3. 感想
+構文解析を行う始めの関数を実装できた。まだ何も動かないが、少し楽しかった。
+
+----------
+
+S1.4
+
+1. 行ったこと
+parse_declaration_head の完成
+
+2. 結果
+type='I', ptrlevel=0, id="a"
+type='C', ptrlevel=1, id="b"
+type='I', ptrlevel=2, id="c"
+type='C', ptrlevel=0, id="d"
+declare.mc:4: ';' expected (last token '[')
+
+3. 感想
+変数の宣言がどのように読み込まれているのかを理解することが出来た。
+
+----------
+
+S1.5
+
+1. 行ったこと
+parse_variable_declaration_tail の作成
+
+2. 結果
+at parse_declaration_head
+(linenum(9) type(ID) token("main"))
+(linenum(9) type(LPAR) token("("))
+type='I', ptrlevel=0, id="main"
+at parse_function_declaration_tail
+== dump list of gt ==
+[itab]         r c b pl ac ar  ad  sz
+  0 a          V G I  0  0 -1   0   1
+  1 b          V G C  0  0 -1   1   1
+  2 c          V G I  0  0 -1   2   1
+  3 d          V G C  0  1  0   3  15
+  4 e          V G I  0  2  1  18 100
+  5 f          V G C  0  3  3 118 210
+[atab] mx elsz
+  0    15    1
+  1     4   25
+  2    25    1
+  3     3   70
+  4     7   10
+  5    10    1
+at parse_declaration_head
+declare.mc:9: type name expected  (last token '(')
+
+3. 感想
+配列の大きさの判定の手法を理解することができた。
+
+----------
+
+S1.6
+
+1. 行ったこと
+parse_variable_declaration の完成
+
+2. 結果
+type='I', ptrlevel=0, id="a"
+type='C', ptrlevel=1, id="b"
+type='I', ptrlevel=2, id="c"
+type='C', ptrlevel=0, id="d"
+type='I', ptrlevel=0, id="e"
+type='C', ptrlevel=1, id="f"
+type='I', ptrlevel=0, id="main"
+declare.mc:9: type name expected  (last token '(')
+
+3. 感想
+4, 5 個目の課題で実装した関数を組み合わせることで、変数宣言の解析ができるようになった。
+
+----------
+
+S1.7
+
+1. 行ったこと
+parse_function_declaration_tail の完成
+
+2. 結果
+at parse_function_declaration_tail
+(linenum(10) type(RPAR) token(")"))
+(linenum(11) type(LBRACE) token("{"))
+== dump list of gt ==
+[itab]         r c b pl ac ar  ad  sz
+  0 a          V G I  0  0 -1   0   1
+  1 b          V G C  1  0 -1   1   1
+  2 c          V G I  2  0 -1   2   1
+  3 d          V G C  0  1  0   3  15
+  4 e          V G I  0  2  1  18 100
+  5 f          V G C  1  3  3 118 210
+  6 main       F G I  0  0 -1   5   0
+[atab] mx elsz
+  0    15    1
+  1     4   25
+  2    25    1
+  3     3   70
+  4     7   10
+  5    10    1
+at parse_function_body
+(linenum(12) type(RBRACE) token("}"))
+== dump list of lt ==
+[itab]         r c b pl ac ar  ad  sz
+[atab] mx elsz
+(linenum(13) type(KW_INT) token("int"))
+at parse_declaration_head
+(linenum(13) type(ID) token("sub1"))
+(linenum(13) type(LPAR) token("("))
+type='I', ptrlevel=0, id="sub1"
+at parse_function_declaration_tail
+(linenum(13) type(KW_INT) token("int"))
+at parse_variable_declaration
+at parse_declaration_head
+(linenum(13) type(ID) token("p"))
+fish: Job 1, './mcc -t 3 declare.mc' terminated by signal SIGSEGV (Address boundary error)
+
+
+3. 感想
+関数宣言の解析まででき、あとは関数の本文を解析するのみなので、だいぶ終りが見えてきた。
+
+----------
+
+S1.8
+
+1. 行ったこと
+parse_function_body の完成
+
+2. 結果
+(linenum(16) type(SEMICOLON) token(";"))
+(linenum(17) type(RBRACE) token("}"))
+== dump list of lt ==
+[itab]         r c b pl ac ar  ad  sz
+  0 p          V A I  0  0 -1   0   1
+  1 q          V A C  1  0 -1   1   1
+  2 r          V A I  2  0 -1   2   1
+  3 b          V A I  0  0 -1   3   1
+  4 x          V L C  0  0 -1   4   1
+  5 y          V L I  1  0 -1   5   1
+  6 z          V L I  0  2  0   6 300
+[atab] mx elsz
+  0    10   30
+  1    30    1
+(linenum(17) type(EOF) token(""))
+at postprocess
+
+3. 感想
+id のアドレス設定をミスっており時間がかかってしまったが、ファイル全体の解析ができ気持ちよかった。
+
+----------
+
+S1.9
+
+1. 行ったこと
+postprocess の完成
+
+2. 結果
+  0 ISP 328
+  1 LC 328
+  2 SB 1
+  3 CALL 5
+  4 EXIT
+  5 ISP 4
+  6 RET
+  7 ISP 309
+  8 RET
+
+3. 感想
+構文解析が終了したタイミングで番地を記録する処理を実装し、そのコードを実際に動かすことができた。
+
+----------
+
+[課題 S1 の感想]
+コンパイラの大枠の実装と、実際に構文解析の実行ができ、まだあまり深く理解できていないが、 STAGE 2 も取り組んでみたい。
