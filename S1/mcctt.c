@@ -1,3 +1,4 @@
+
 /*
  * mcc                       by Nagisa Neco Ishiura    *
  *                                                     */
@@ -23,7 +24,7 @@ typedef enum
 } mcc_trace_t;
 
 static mcc_trace_t mcc_trace = mcc_TRACE_NO;
-static int tmp_stack1715065820 = 13694;
+static int tmp_stack1715667948 = 16654;
 
 static void arg(int argc, char **argv, char source_f[], char object_f[], mcc_trace_t *trace);
 static void argerr();
@@ -70,7 +71,6 @@ int main(int argc, char **argv)
   arg(argc, argv, source_f, object_f, &mcc_trace);
 
   /* (2)〜(7)の処理をこの下に書き込む */
-  // (2)
   x = lex_new(source_f);
   c = code_new();
   gt = tab_new(lex_TOKEN_MAXLEN);
@@ -92,6 +92,7 @@ int main(int argc, char **argv)
     assert(0); /* エラー */
   }
   lex_trace_set(x, lex_trace);
+
   preprocess(c);
   lex_get(x);
   parse_program(c, x, gt);
@@ -227,28 +228,26 @@ static void preprocess(code_t *c)
 
 static void postprocess(code_t *c, tab_t *gt)
 {
-  int i;
   at("postprocess");
-
   code_set(c, 0, opcode_ISP, gt->itab_vsize, 0);
   code_set(c, 1, opcode_LC, gt->itab_vsize, 0);
 
-  i = tab_itab_find(gt, "main");
+  int i = tab_itab_find(gt, "main"); // … (1)
   if (i == itab_FAIL)
-  {
-    semantic_error("body of 'main' not defined");
+  { // … (2)
+    semantic_error("body of ’main’ not defined");
   }
   else if (gt->itab[i].role == itab_role_VAR)
-  {
-    semantic_error("'main' is declared as a variable");
+  { // … (3)
+    semantic_error("’main’ is declared as a variable");
   }
   else if (gt->itab[i].role == itab_role_FUNC)
-  {
+  { // … (4)
     code_set(c, 3, opcode_CALL, gt->itab[i].address, 0);
   }
   else
   {
-    assert(0);
+    assert(0); // … (5)
   }
 }
 
@@ -274,7 +273,7 @@ static void parse_program(code_t *c, lex_t *x, tab_t *gt)
       }
       else
       {
-        syntax_error(x, "';' expected");
+        syntax_error(x, "’;’ expected");
       }
     }
   }
@@ -282,8 +281,8 @@ static void parse_program(code_t *c, lex_t *x, tab_t *gt)
 
 static void parse_declaration_head(code_t *c, lex_t *x, itab_basetype_t *type, int *ptrlevel, char *id)
 {
-  at("parse_declaration_head");
 
+  at("parse_declaration_head");
   if (x->type == token_KW_INT)
   {
     *type = itab_basetype_INT;
@@ -301,7 +300,7 @@ static void parse_declaration_head(code_t *c, lex_t *x, itab_basetype_t *type, i
   *ptrlevel = 0;
   while (x->type == token_STAR)
   {
-    *ptrlevel += 1;
+    (*ptrlevel)++;
     lex_get(x);
   }
 
@@ -315,24 +314,21 @@ static void parse_declaration_head(code_t *c, lex_t *x, itab_basetype_t *type, i
     syntax_error(x, "identifier expected");
   }
 
-  // fprintf(stderr, "type='%c', ptrlevel=%i, id=\"%s\"\n", *type, *ptrlevel, id);
+  // fprintf(stderr, "type=’%c’, ptrlevel=%i, id=\"%s\"\n", *type, *ptrlevel, id);
 }
 
 static void
 parse_variable_declaration_tail(code_t *c, lex_t *x, tab_t *t, itab_cls_t cls, itab_basetype_t type, int ptrlevel, char *id)
 {
-  int dimension = 0;
   int max[ARRAY_MAXDIMENSION];
   int size;
   int elementsize[ARRAY_MAXDIMENSION];
-
   at("parse_variable_declaration_tail");
-
+  int dimension = 0;
   while (x->type == token_LBRACK)
   {
     assert(dimension < ARRAY_MAXDIMENSION);
     lex_get(x);
-
     if (x->type == token_INT)
     {
       max[dimension] = atoi(x->token);
@@ -341,16 +337,15 @@ parse_variable_declaration_tail(code_t *c, lex_t *x, tab_t *t, itab_cls_t cls, i
     }
     else
     {
-      syntax_error(x, "syntax error");
+      syntax_error(x, "type name expected ");
     }
-
     if (x->type == token_RBRACK)
     {
       lex_get(x);
     }
     else
     {
-      syntax_error(x, "syntax error");
+      syntax_error(x, "type name expected ");
     }
   }
 
@@ -395,9 +390,7 @@ parse_variable_declaration_tail(code_t *c, lex_t *x, tab_t *t, itab_cls_t cls, i
     {
       int a = tab_atab_append(t, max[d], elementsize[d]);
       if (d == 0)
-      {
         t->itab[i].aref = a;
-      }
     }
   }
 }
@@ -407,20 +400,20 @@ static void parse_function_declaration_tail(code_t *c, lex_t *x, tab_t *gt, itab
   tab_t *lt;
   int argc;
   int i;
-
   at("parse_function_declaration_tail");
-
   lt = tab_new(lex_TOKEN_MAXLEN);
+
   if (x->type == token_LPAREN)
   {
     lex_get(x);
   }
   else
   {
-    syntax_error(x, "syntax error");
+    syntax_error(x, "type name expected ");
   }
 
   argc = 0;
+
   while (x->type != token_RPAREN)
   {
     argc++;
@@ -433,7 +426,7 @@ static void parse_function_declaration_tail(code_t *c, lex_t *x, tab_t *gt, itab
       }
       else
       {
-        syntax_error(x, "syntax error");
+        syntax_error(x, "type name expected ");
       }
     }
   }
@@ -469,8 +462,8 @@ static void parse_function_declaration_tail(code_t *c, lex_t *x, tab_t *gt, itab
 
 static void parse_function_body(code_t *c, lex_t *x, tab_t *gt, tab_t *lt, int argc)
 {
-  at("parse_function_body");
 
+  at("parse_function_body");
   if (x->type == token_LBRACE)
   {
     lex_get(x);
@@ -489,7 +482,7 @@ static void parse_function_body(code_t *c, lex_t *x, tab_t *gt, tab_t *lt, int a
     }
     else
     {
-      syntax_error(x, "syntax error");
+      syntax_error(x, "");
     }
   }
 
@@ -506,6 +499,7 @@ static void parse_function_body(code_t *c, lex_t *x, tab_t *gt, tab_t *lt, int a
     parse_statement(c, x, gt, lt);
   }
 
+  // 読み飛ばし
   if (x->type == token_RBRACE)
   {
     lex_get(x);
@@ -520,18 +514,15 @@ static void parse_function_body(code_t *c, lex_t *x, tab_t *gt, tab_t *lt, int a
 
 static void parse_variable_declaration(code_t *c, lex_t *x, tab_t *t, itab_cls_t cls)
 {
-  int ptrlevel;
   itab_basetype_t type;
+  int ptrlevel;
   char id[lex_TOKEN_MAXLEN + 1];
-
   at("parse_variable_declaration");
-
   parse_declaration_head(c, x, &type, &ptrlevel, id);
   parse_variable_declaration_tail(c, x, t, cls, type, ptrlevel, id);
 }
 
-static void
-parse_statement(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
+static void parse_statement(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_statement");
   parse_call(c, x, gt, lt);
@@ -581,9 +572,14 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
     code_append(c, opcode_LC, x->val, 0);
     lex_get(x);
   }
+  else if (x->type == token_INT)
+  {
+    code_append(c, opcode_LC, x->val, 0);
+    lex_get(x);
+  }
   else
   {
-    syntax_error(x, "invalid syntax");
+    syntax_error(x, "character or integer literal expected");
   }
 }
 
@@ -631,7 +627,7 @@ static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
     }
     else
     {
-      syntax_error(x, "\"(\" is expected");
+      syntax_error(x, "'(' expected after 'putchar'");
     }
 
     parse_expression(c, x, gt, lt);
@@ -642,15 +638,40 @@ static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
     }
     else
     {
-      syntax_error(x, "\")\" is expected");
+      syntax_error(x, "')' expected after expression in 'putchar'");
     }
-
     code_append(c, opcode_DUP, 0, 0);
     code_append(c, opcode_PUTC, 0, 0);
   }
+  else if (strcmp(x->token, "putint") == 0)
+  {
+    lex_get(x);
+
+    if (x->type == token_LPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "'(' expected after 'putchar'");
+    }
+
+    parse_expression(c, x, gt, lt);
+
+    if (x->type == token_RPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "')' expected after expression in 'putchar'");
+    }
+    code_append(c, opcode_DUP, 0, 0);
+    code_append(c, opcode_PUTI, 0, 0);
+  }
   else
   {
-    semantic_error("undefined function");
+    semantic_error("undefined function called");
   }
 }
 

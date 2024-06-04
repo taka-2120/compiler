@@ -1,0 +1,15 @@
+  0 ISP 0
+  1 LC 0
+  2 SB 1
+  3 CALL 5
+  4 EXIT
+  5 ISP 3
+  6 LC 97
+  7 DUP
+  8 PUTC
+  9 ISP -1
+ 10 LC 10
+ 11 DUP
+ 12 PUTC
+ 13 ISP -1
+ 14 RET
