@@ -240,15 +240,20 @@ static void postprocess(code_t *c, tab_t *gt)
   code_set(c, 1, opcode_LC, gt->itab_vsize, 0);
 
   i = tab_itab_find(gt, "main");
-  if (i == itab_FAIL) {
+  if (i == itab_FAIL)
+  {
     semantic_error("body of 'main' not defined");
   }
-  else if (gt->itab[i].role == itab_role_VAR) {
+  else if (gt->itab[i].role == itab_role_VAR)
+  {
     semantic_error("'main' is declared as a variable");
   }
-  else if (gt->itab[i].role == itab_role_FUNC) {
-    code_set(c, 3, opcode_CALL, gt->itab[i].address, 0);
-  } else {
+  else if (gt->itab[i].role == itab_role_FUNC)
+  {
+    code_set(c, 2, opcode_CALL, gt->itab[i].address, 0);
+  }
+  else
+  {
     assert(0);
   }
 }
@@ -535,6 +540,12 @@ static void
 parse_statement(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_statement");
+  parse_call(c, x, gt, lt);
+  code_set(c, 3, opcode_ISP, -1, 0);
+  if (x->type == token_SEMICOLON)
+  {
+    lex_get(x);
+  }
 }
 
 static void parse_expression(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
@@ -595,6 +606,38 @@ static void parse_return(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_call");
+
+  if (strcmp(x->token, "putchar") == 0)
+  {
+    lex_get(x);
+
+    if (x->type == token_LPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\"(\" is expected");
+    }
+
+    parse_expression(c, x, gt, lt);
+
+    if (x->type == token_RPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\")\" is expected");
+    }
+
+    code_set(c, 4, opcode_DUP, 0, 0);
+    code_set(c, 5, opcode_PUTC, 0, 0);
+  }
+  else
+  {
+    syntax_error(x, "invalid syntax");
+  }
 }
 
 static void parse_lhs_expression(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
