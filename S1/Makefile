@@ -13,8 +13,6 @@ vsm: vsm.o code.o
 	$(CC) $(CFLAGS) vsm.o code.o -o vsm
 mcc: mcc.o lex.o tab.o code.o
 	$(CC) $(CFLAGS) mcc.o lex.o tab.o code.o -o mcc
-mcctt: mcctt.o lex.o tab.o code.o
-	$(CC) $(CFLAGS) mcctt.o lex.o tab.o code.o -o mcctt
 testlex: testlex.o lex.o
 	$(CC) $(CFLAGS) testlex.o lex.o -o testlex
 
@@ -26,7 +24,6 @@ tab.o: tab.c tab.h
 code.o: code.c code.h
 vsm.o: vsm.c code.h
 mcc.o: mcc.c lex.h tab.h code.h
-mcctt.o: mcctt.c lex.h tab.h code.h
 testlex.o: testlex.c lex.h
 
 clean: 
