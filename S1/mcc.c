@@ -550,20 +550,122 @@ parse_statement(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 
 static void parse_expression(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  lex_type_t operator;
   at("parse_expression");
+  operator= x->type;
+  if (operator== token_LT || operator== token_LE || operator== token_GT || operator== token_GE || operator== token_EQEQ || operator== token_NE)
+  {
+    lex_get(x);
+  }
   parse_expression2(c, x, gt, lt);
+
+  operator= x->type;
+  while (operator== token_LT || operator== token_LE || operator== token_GT || operator== token_GE || operator== token_EQEQ || operator== token_NE)
+  {
+    lex_get(x);
+    parse_expression2(c, x, gt, lt);
+    if (operator== token_LT)
+    {
+      code_append(c, opcode_LT, 0, 0);
+    }
+    else if (operator== token_LE)
+    {
+      code_append(c, opcode_LE, 0, 0);
+    }
+    else if (operator== token_GT)
+    {
+      code_append(c, opcode_GT, 0, 0);
+    }
+    else if (operator== token_GE)
+    {
+      code_append(c, opcode_GE, 0, 0);
+    }
+    else if (operator== token_EQEQ)
+    {
+      code_append(c, opcode_EQ, 0, 0);
+    }
+    else if (operator== token_NE)
+    {
+      code_append(c, opcode_NE, 0, 0);
+    }
+    else
+    {
+      return;
+    }
+    operator= x->type;
+  }
 }
 
 static void parse_expression2(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  lex_type_t operator;
   at("parse_expression2");
+  operator= x->type;
+  if (operator== token_PLUS || operator== token_MINUS)
+  {
+    lex_get(x);
+  }
   parse_expression3(c, x, gt, lt);
+  if (operator== token_MINUS)
+  {
+    code_append(c, opcode_INV, 0, 0);
+  }
+
+  operator= x->type;
+  while (operator== token_PLUS || operator== token_MINUS)
+  {
+    lex_get(x);
+    parse_expression3(c, x, gt, lt);
+    if (operator== token_PLUS)
+    {
+      code_append(c, opcode_ADD, 0, 0);
+    }
+    else if (operator== token_MINUS)
+    {
+      code_append(c, opcode_SUB, 0, 0);
+    }
+    else
+    {
+      return;
+    }
+    operator= x->type;
+  }
 }
 
 static void parse_expression3(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  lex_type_t operator;
   at("parse_expression3");
+  operator= x->type;
+  if (operator== token_STAR || operator== token_SLASH || operator== token_PERCENT)
+  {
+    lex_get(x);
+  }
   parse_expression4(c, x, gt, lt);
+
+  operator= x->type;
+  while (operator== token_STAR || operator== token_SLASH || operator== token_PERCENT)
+  {
+    lex_get(x);
+    parse_expression4(c, x, gt, lt);
+    if (operator== token_STAR)
+    {
+      code_append(c, opcode_MUL, 0, 0);
+    }
+    else if (operator== token_SLASH)
+    {
+      code_append(c, opcode_DIV, 0, 0);
+    }
+    else if (operator== token_PERCENT)
+    {
+      code_append(c, opcode_MOD, 0, 0);
+    }
+    else
+    {
+      return;
+    }
+    operator= x->type;
+  }
 }
 
 static void parse_expression4(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
@@ -576,10 +678,23 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_expression5");
 
-  if (x->type == token_CHAR)
+  if (x->type == token_CHAR || x->type == token_INT)
   {
     code_append(c, opcode_LC, x->val, 0);
     lex_get(x);
+  }
+  else if (x->type == token_LPAREN)
+  {
+    lex_get(x);
+    while (x->type != token_RPAREN)
+    {
+      parse_expression(c, x, gt, lt);
+    }
+    lex_get(x);
+  }
+  else if (x->type == token_ID)
+  {
+    parse_call(c, x, gt, lt);
   }
   else
   {
@@ -647,6 +762,81 @@ static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 
     code_append(c, opcode_DUP, 0, 0);
     code_append(c, opcode_PUTC, 0, 0);
+  }
+  else if (strcmp(x->token, "getchar") == 0)
+  {
+    lex_get(x);
+
+    if (x->type == token_LPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\"(\" is expected");
+    }
+
+    if (x->type == token_RPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\")\" is expected");
+    }
+
+    code_append(c, opcode_GETC, 0, 0);
+  }
+  else if (strcmp(x->token, "putint") == 0)
+  {
+    lex_get(x);
+
+    if (x->type == token_LPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\"(\" is expected");
+    }
+
+    parse_expression(c, x, gt, lt);
+
+    if (x->type == token_RPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\")\" is expected");
+    }
+
+    code_append(c, opcode_DUP, 0, 0);
+    code_append(c, opcode_PUTI, 0, 0);
+  }
+  else if (strcmp(x->token, "getint") == 0)
+  {
+    lex_get(x);
+
+    if (x->type == token_LPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\"(\" is expected");
+    }
+
+    if (x->type == token_RPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\")\" is expected");
+    }
+
+    code_append(c, opcode_GETI, 0, 0);
   }
   else
   {
