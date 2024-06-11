@@ -694,7 +694,15 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
   }
   else if (x->type == token_ID)
   {
-    parse_call(c, x, gt, lt);
+    int isfunc = id_isfunc(x->token, gt, lt);
+    if (isfunc == 1)
+    {
+      parse_call(c, x, gt, lt);
+    }
+    else
+    {
+      parse_variable_reference(c, x, gt, lt);
+    }
   }
   else
   {
@@ -704,7 +712,22 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 
 static void parse_variable_reference(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  int local_index;
+  int global_index;
+
   at("parse_variable_reference");
+
+  local_index = tab_itab_find(lt, x->token);
+  global_index = tab_itab_find(gt, x->token);
+  if (global_index != itab_FAIL)
+  {
+    code_append(c, opcode_LV, 0, global_index);
+  }
+  else
+  {
+    code_append(c, opcode_LV, 1, STACK_FRAME_RESERVE + local_index);
+  }
+  lex_get(x);
 }
 
 static void parse_array_index(code_t *c, lex_t *x, tab_t *gt, tab_t *lt, tab_t *t, int i)
@@ -852,4 +875,40 @@ static void parse_lhs_expression(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 static int id_isfunc(char *id, tab_t *gt, tab_t *lt)
 /* id が関数名なら 1 を，変数名なら 0 を返す */
 {
+  int isfunc;
+  int index = tab_itab_find(lt, id);
+
+  if (index != itab_FAIL)
+  {
+    isfunc = 0;
+    assert(lt->itab[index].role == itab_role_VAR);
+  }
+  else if (strcmp(id, "putchar") == 0 || strcmp(id, "putint") == 0 || strcmp(id, "getchar") == 0 || strcmp(id, "getint") == 0)
+  {
+    isfunc = 1;
+  }
+  else
+  {
+    index = tab_itab_find(gt, id);
+    if (index != itab_FAIL)
+    {
+      if (gt->itab[index].role == itab_role_FUNC)
+      {
+        isfunc = 1;
+      }
+      else if (gt->itab[index].role == itab_role_VAR)
+      {
+        isfunc = 0;
+      }
+      else
+      {
+        assert(0);
+      }
+    }
+    else
+    {
+      semantic_error("id is not defined");
+    }
+  }
+  return isfunc;
 }
