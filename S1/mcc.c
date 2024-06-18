@@ -534,17 +534,57 @@ static void
 parse_statement(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_statement");
-  parse_call(c, x, gt, lt);
 
-  code_append(c, opcode_ISP, -1, 0);
-
-  if (x->type == token_SEMICOLON)
+  if (x->type == token_ID)
+  {
+    int isfunc = id_isfunc(x->token, gt, lt);
+    if (isfunc == 1)
+    {
+      parse_call(c, x, gt, lt);
+      if (x->type == token_SEMICOLON)
+      {
+        lex_get(x);
+      }
+      else
+      {
+        syntax_error(x, "; is expected");
+      }
+    }
+    else
+    {
+      parse_assign(c, x, gt, lt);
+    }
+  }
+  else if (x->type == token_KW_IF)
   {
     lex_get(x);
+    parse_if(c, x, gt, lt);
+  }
+  else if (x->type == token_KW_WHILE)
+  {
+    lex_get(x);
+    parse_while(c, x, gt, lt);
+  }
+  else if (x->type == token_SEMICOLON)
+  {
+    return;
+  }
+  else if (x->type == token_LBRACE)
+  {
+    lex_get(x);
+    while (x->type != token_RBRACE)
+    {
+      parse_statement(c, x, gt, lt);
+    }
+    lex_get(x);
+  }
+  else if (strcmp(x->token, "return") == 0)
+  {
+    parse_return(c, x, gt, lt);
   }
   else
   {
-    syntax_error(x, "';' expected");
+    syntax_error(x, "; is expected");
   }
 }
 
@@ -686,11 +726,15 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
   else if (x->type == token_LPAREN)
   {
     lex_get(x);
-    while (x->type != token_RPAREN)
+    parse_expression(c, x, gt, lt);
+    if (x->type == token_RPAREN)
     {
-      parse_expression(c, x, gt, lt);
+      lex_get(x);
     }
-    lex_get(x);
+    else
+    {
+      syntax_error(x, "')' expected");
+    }
   }
   else if (x->type == token_ID)
   {
@@ -738,16 +782,74 @@ static void parse_array_index(code_t *c, lex_t *x, tab_t *gt, tab_t *lt, tab_t *
 static void parse_assign(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_assign");
+
+  parse_lhs_expression(c, x, gt, lt);
+
+  if (x->type == token_EQ)
+  {
+    lex_get(x);
+  }
+  else
+  {
+    syntax_error(x, "= expected");
+  }
+
+  parse_expression(c, x, gt, lt);
+
+  if (x->type == token_SEMICOLON)
+  {
+    lex_get(x);
+  }
+  else
+  {
+    syntax_error(x, "; expected");
+  }
+  code_append(c, opcode_SI, 0, 0);
 }
 
 static void parse_if(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  int bz_add, b_add;
   at("parse_if");
+
+  parse_expression(c, x, gt, lt);
+
+  bz_add = code_append(c, opcode_BZ, 0, 0);
+  parse_statement(c, x, gt, lt);
+
+  if (x->type == token_KW_ELSE)
+  {
+    lex_get(x);
+
+    b_add = code_append(c, opcode_B, 0, 0);
+
+    code_set(c, bz_add, opcode_BZ, c->size - bz_add - 1, 0);
+
+    parse_statement(c, x, gt, lt);
+
+    code_set(c, b_add, opcode_B, c->size - b_add - 1, 0);
+  }
+  else
+  {
+    code_set(c, bz_add, opcode_BZ, c->size - bz_add - 1, 0);
+  }
 }
 
 static void parse_while(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  int bz_add, b_add, init_add;
   at("parse_while");
+  init_add = c->size;
+
+  parse_expression(c, x, gt, lt);
+
+  bz_add = code_append(c, opcode_BZ, 0, 0);
+
+  parse_statement(c, x, gt, lt);
+
+  b_add = code_append(c, opcode_B, 0, 0);
+  code_set(c, bz_add, opcode_BZ, c->size - bz_add - 1, 0);
+  code_set(c, b_add, opcode_B, (b_add - init_add + 1) * -1, 0);
 }
 
 static void parse_return(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
@@ -863,13 +965,28 @@ static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
   }
   else
   {
-    semantic_error("undefined function");
+    parse_expression(c, x, gt, lt);
   }
 }
 
 static void parse_lhs_expression(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  int local_index;
+  int global_index;
+
   at("parse_lhs_expression");
+
+  local_index = tab_itab_find(lt, x->token);
+  global_index = tab_itab_find(gt, x->token);
+  if (global_index != itab_FAIL)
+  {
+    code_append(c, opcode_LA, 0, global_index);
+  }
+  else
+  {
+    code_append(c, opcode_LA, 1, STACK_FRAME_RESERVE + local_index);
+  }
+  lex_get(x);
 }
 
 static int id_isfunc(char *id, tab_t *gt, tab_t *lt)
