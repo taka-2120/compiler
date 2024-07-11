@@ -555,6 +555,23 @@ parse_statement(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
       parse_assign(c, x, gt, lt);
     }
   }
+  else if (x->type == token_STAR)
+  {
+    int p_count = 0;
+
+    while (x->type == token_STAR)
+    {
+      p_count += 1;
+      lex_get(x);
+    }
+
+    parse_assign(c, x, gt, lt);
+
+    for (int i = 0; i < p_count; i++)
+    {
+      code_append(c, opcode_LI, 0, 0);
+    }
+  }
   else if (x->type == token_KW_IF)
   {
     lex_get(x);
@@ -710,8 +727,17 @@ static void parse_expression3(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 
 static void parse_expression4(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
+  int p_count = 0;
   at("parse_expression4");
+  while (x->type == token_STAR)
+  {
+    p_count += 1;
+  }
   parse_expression5(c, x, gt, lt);
+  for (int i = 0; i < p_count; i++)
+  {
+    code_append(c, opcode_LI, 0, 0);
+  }
 }
 
 static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
@@ -738,6 +764,10 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
   }
   else if (x->type == token_ID)
   {
+    if (x->type == token_AND)
+    {
+      lex_get(x);
+    }
     int isfunc = id_isfunc(x->token, gt, lt);
     if (isfunc == 1)
     {
@@ -747,6 +777,10 @@ static void parse_expression5(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
     {
       parse_variable_reference(c, x, gt, lt);
     }
+  }
+  else if (x->type == token_AND)
+  {
+    parse_variable_reference(c, x, gt, lt);
   }
   else
   {
@@ -758,18 +792,25 @@ static void parse_variable_reference(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   int local_index;
   int global_index;
+  int opcode;
 
   at("parse_variable_reference");
+  opcode = x->type == token_AND ? opcode_LA : opcode_LV;
+
+  if (x->type == token_AND)
+  {
+    lex_get(x);
+  }
 
   local_index = tab_itab_find(lt, x->token);
   global_index = tab_itab_find(gt, x->token);
   if (global_index != itab_FAIL)
   {
-    code_append(c, opcode_LV, 0, global_index);
+    code_append(c, opcode, 0, global_index);
   }
   else
   {
-    code_append(c, opcode_LV, 1, STACK_FRAME_RESERVE + local_index);
+    code_append(c, opcode, 1, STACK_FRAME_RESERVE + local_index);
   }
   lex_get(x);
 }
@@ -855,6 +896,19 @@ static void parse_while(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 static void parse_return(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
 {
   at("parse_return");
+  code_append(c, opcode_LA, 1, 0);
+  lex_get(x);
+  parse_expression(c, x, gt, lt);
+  if (x->type == token_SEMICOLON)
+  {
+    lex_get(x);
+  }
+  else
+  {
+    syntax_error(x, "\";\" is expected");
+  }
+  code_append(c, opcode_SI, 0, 0);
+  code_append(c, opcode_RET, 0, 0);
 }
 
 static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
@@ -965,7 +1019,48 @@ static void parse_call(code_t *c, lex_t *x, tab_t *gt, tab_t *lt)
   }
   else
   {
-    parse_expression(c, x, gt, lt);
+    char func_name[128];
+    strcpy(func_name, x->token);
+
+    code_append(c, opcode_ISP, STACK_FRAME_RESERVE, 0);
+
+    lex_get(x);
+
+    if (x->type == token_LPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\"(\" is expected");
+    }
+
+    int n = 0;
+
+    while (x->type != token_RPAREN)
+    {
+      if (n != 0 && x->type == token_COMMA)
+      {
+        lex_get(x);
+      }
+
+      parse_expression(c, x, gt, lt);
+      n += 1;
+    }
+
+    if (x->type == token_RPAREN)
+    {
+      lex_get(x);
+    }
+    else
+    {
+      syntax_error(x, "\")\" is expected");
+    }
+
+    code_append(c, opcode_ISP, -(STACK_FRAME_RESERVE + n), 0);
+    int func_index = tab_itab_find(gt, func_name);
+    int func_address = gt->itab[func_index].address;
+    code_append(c, opcode_CALL, func_address, 0);
   }
 }
 
